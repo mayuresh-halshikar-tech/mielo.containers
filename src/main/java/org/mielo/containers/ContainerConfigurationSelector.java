@@ -18,19 +18,39 @@ public class ContainerConfigurationSelector implements ImportSelector {
 
     @Override
     public String[] selectImports(AnnotationMetadata metadata) {
+        DatabaseConfiguration configuration = getDatabaseConfiguration();
         AnnotationAttributes attributes = AnnotationAttributes
                 .fromMap(metadata.getAnnotationAttributes(EnableContainerManagement.class.getName(), false));
         String[] profiles = attributes.getStringArray("profiles");
-        ImageHolder.image = attributes.getString("image");
+        DatabaseConfigurationHolder.setDatabaseConfiguration(configuration);
         if(environment.matchesProfiles(profiles)) {
-            String container = attributes.getString("container");
-            if(container.equalsIgnoreCase("mysql")) {
-                log.info(format("**************** MIELO Containers | Starting container: '%s' | Image: '%s' ", container, ImageHolder.image));
+            if(configuration.getContainer().equalsIgnoreCase("mysql")) {
+                log.info(format("**************** MIELO Containers | Starting container: '%s' | Image: '%s' ",
+                        configuration.getContainer(), configuration.getImage()));
                 return new String [] {MySQLContainerConfig.class.getName()};
             } else {
-                log.warn(format("**************** MIELO Containers | Container '%s' is not yet supported", container));
+                log.warn(format("**************** MIELO Containers | Container '%s' is not yet supported", configuration.getContainer()));
             }
         }
         return new String[0];
+    }
+
+    private DatabaseConfiguration getDatabaseConfiguration() {
+        String container = environment.getProperty("spring.mielo.container.name");
+        String image = environment.getProperty("spring.mielo.container.image");
+        Integer port = environment.getProperty("spring.mielo.container.port", Integer.class);
+        String user = environment.getProperty("spring.datasource.username");
+        String password = environment.getProperty("spring.datasource.password");
+        String database = environment.getProperty("spring.datasource.database");
+
+        return DatabaseConfiguration.builder()
+                .container(container)
+                .image(image)
+                .port(port)
+                .user(user)
+                .password(password)
+                .database(database)
+                .build();
+
     }
 }

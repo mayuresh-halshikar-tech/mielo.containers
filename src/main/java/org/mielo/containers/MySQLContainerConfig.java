@@ -6,7 +6,6 @@ import org.springframework.context.annotation.*;
 import javax.sql.DataSource;
 
 @Configuration
-@ComponentScan(basePackages = "org.mielo.containers")
 @RequiredArgsConstructor
 @Import(ContainerFactory.class)
 public class MySQLContainerConfig {

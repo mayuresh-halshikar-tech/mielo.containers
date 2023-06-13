@@ -13,6 +13,4 @@ import java.lang.annotation.Target;
 @Import({ContainerConfigurationSelector.class})
 public @interface EnableContainerManagement {
     String [] profiles();
-    String container();
-    String image();
 }

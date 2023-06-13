@@ -1,7 +1,6 @@
 package org.mielo.containers;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MutablePropertySources;
@@ -18,24 +17,17 @@ import java.util.Properties;
 @RequiredArgsConstructor
 public class ContainerFactory {
 
-    @Value("${spring.datasource.username}")
-    private String user;
-    @Value("${spring.datasource.password}")
-    private String password;
-    @Value("${spring.mielo.containers.datasource.port}")
-    private Integer containerMappedPort;
-    @Value("${spring.datasource.database}")
-    private String database;
     private final ConfigurableEnvironment environment;
 
     public DataSource startMySQLContainer() {
-        MySQLContainer container = new MySQLContainer(ImageHolder.image)
-                .withDatabaseName(database)
-                .withUsername(user)
-                .withPassword(password);
+        DatabaseConfiguration configuration = DatabaseConfigurationHolder.getDatabaseConfiguration();
+        MySQLContainer container = new MySQLContainer(configuration.getImage())
+                .withDatabaseName(configuration.getDatabase())
+                .withUsername(configuration.getUser())
+                .withPassword(configuration.getPassword());
         container.withAccessToHost(true);
-        Testcontainers.exposeHostPorts(containerMappedPort);
-        container.getPortBindings().add(containerMappedPort + ":" + MySQLContainer.MYSQL_PORT);
+        Testcontainers.exposeHostPorts(configuration.getPort());
+        container.getPortBindings().add(configuration.getPort() + ":" + MySQLContainer.MYSQL_PORT);
         container.start();
 
         String jdbcUrl = container.getJdbcUrl();
@@ -49,8 +41,8 @@ public class ContainerFactory {
         return DataSourceBuilder
                 .create()
                 .url(container.getJdbcUrl())
-                .username(user)
-                .password(password)
+                .username(configuration.getUser())
+                .password(configuration.getPassword())
                 .driverClassName(container.getDriverClassName())
                 .build();
     }
